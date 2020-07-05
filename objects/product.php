@@ -92,11 +92,67 @@ class ProductObject {
         }
     }
 
-    public function checkData($productData): bool {
+    /**
+     * @param object $productData
+     * @return bool
+     */
+    public function checkData(object $productData): bool {
         return (!$productData
             && empty($productData->name)
             && empty($productData->price)
             && empty($productData->description)
             && empty($productData->category_id));
+    }
+
+
+    public function updateProduct(object $productData){
+        if (!$this->isProduct($productData->id)) {
+            return $this->validate->error(404);
+        }
+        $database = $this->db;
+        $query = "UPDATE
+                " . $this->table_name . "
+            SET
+                name = :name,
+                price = :price,
+                description = :description,
+                category_id = :category_id
+            WHERE
+                id = :id";
+        $statement = $database->prepare($query);
+        $name = htmlspecialchars(strip_tags($productData->name));
+        $price = htmlspecialchars(strip_tags($productData->price));
+        $description = htmlspecialchars(strip_tags($productData->description));
+        $category_id = htmlspecialchars(strip_tags($productData->category_id));
+        $id = htmlspecialchars(strip_tags($productData->id));
+
+        $statement->bindParam(":name", $name);
+        $statement->bindParam(":price", $price);
+        $statement->bindParam(":description", $description);
+        $statement->bindParam(":category_id", $category_id);
+        $statement->bindParam(":id", $id);
+
+        if ($statement->execute()) {
+            http_response_code(200);
+           return json_encode([
+               "message" => "Product was updated."
+           ]);
+        }
+
+        return $this->validate->error(503);
+    }
+
+    /**
+     * @param $id
+     * @return bool
+     */
+    public function isProduct($id):bool {
+        $database = $this->db;
+        $query = "SELECT * FROM {$this->table_name} WHERE id = {$id}";
+        $statement = $database->prepare($query);
+        $statement->execute();
+        $number = $statement->rowCount();
+
+        return $number > 0;
     }
 }
