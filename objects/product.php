@@ -1,5 +1,6 @@
 <?php
 include_once ('../config/database.php');
+
 class ProductObject {
     public $db;
     public $table_name;
@@ -12,7 +13,7 @@ class ProductObject {
         $this->db = $database->getConnect();
     }
 
-    public function getProduct() {
+    public function getProduct($id) {
         $database = $this->db;
         $query = "SELECT
                 c.name as category_name, p.id, p.name, p.description, p.price, p.category_id, p.created
@@ -20,11 +21,15 @@ class ProductObject {
                 " . $this->table_name . " p
                 LEFT JOIN
                     categories c
-                        ON p.category_id = c.id
-            ORDER BY
+                        ON p.category_id = c.id ";
+        if ($id) {
+            $query .= "WHERE p.id = {$id} ";
+        }
+            $query .= "ORDER BY
                 p.created DESC";
         $statement = $database->prepare($query);
         $statement->execute();
+
         return $this->convertData($statement);
     }
 
