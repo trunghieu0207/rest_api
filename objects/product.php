@@ -1,8 +1,11 @@
 <?php
 include_once ('../config/database.php');
+include_once ('../error/validate.php');
+
 class ProductObject {
     public $db;
     public $table_name;
+    public $validate;
     private $dataConvert = [];
 
     public function __construct($table_name) {
@@ -10,9 +13,12 @@ class ProductObject {
 
         $database = new Database();
         $this->db = $database->getConnect();
+
+        $validate = new Validate();
+        $this->validate = $validate;
     }
 
-    public function getProduct() {
+    public function getProduct($id) {
         $database = $this->db;
         $query = "SELECT
                 c.name as category_name, p.id, p.name, p.description, p.price, p.category_id, p.created
@@ -20,11 +26,15 @@ class ProductObject {
                 " . $this->table_name . " p
                 LEFT JOIN
                     categories c
-                        ON p.category_id = c.id
-            ORDER BY
+                        ON p.category_id = c.id ";
+        if ($id) {
+            $query .= "WHERE p.id = {$id} ";
+        }
+            $query .= "ORDER BY
                 p.created DESC";
         $statement = $database->prepare($query);
         $statement->execute();
+
         return $this->convertData($statement);
     }
 
@@ -48,19 +58,13 @@ class ProductObject {
 
             return json_encode($this->dataConvert);
         } else {
-         http_response_code(404);
-         return json_encode(
-             ["message" => "Not found product"]
-         );
+            return $this->validate->error(404);
         }
     }
 
     public function createProduct($productData) {
         if ($this->checkData($productData)) {
-            http_response_code(400);
-            return json_encode(
-                ["message" => "Unable to create product. Data is incomplete."]
-            );
+            return $this->validate->error(400);
         }
         $database = $this->db;
         $query = "INSERT INTO
@@ -82,13 +86,9 @@ class ProductObject {
         $statement->bindParam(":created", $created);
 
         if ($statement->execute()) {
-            http_response_code(201);
-            echo json_encode(["message" => "Product was created."]);
+            return $this->validate->success(201);
         } else {
-            http_response_code(503);
-            echo json_encode(
-                ["message" => "Unable to create product."]
-            );
+            return $this->validate->error(503);
         }
     }
 
