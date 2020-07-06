@@ -145,6 +145,7 @@ class ProductObject {
     /**
      * @param $id
      * @return bool
+     *
      */
     public function isProduct($id):bool {
         $database = $this->db;
