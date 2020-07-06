@@ -155,4 +155,5 @@ class ProductObject {
 
         return $number > 0;
     }
+
 }
