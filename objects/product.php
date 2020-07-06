@@ -8,6 +8,10 @@ class ProductObject {
     public $validate;
     private $dataConvert = [];
 
+    /**
+     * ProductObject constructor.
+     * @param $table_name
+     */
     public function __construct($table_name) {
         $this->table_name = $table_name;
 
@@ -18,6 +22,10 @@ class ProductObject {
         $this->validate = $validate;
     }
 
+    /**
+     * @param $id
+     * @return false|string
+     */
     public function getProduct($id) {
         $database = $this->db;
         $query = "SELECT
@@ -38,6 +46,10 @@ class ProductObject {
         return $this->convertData($statement);
     }
 
+    /**
+     * @param $statement
+     * @return false|string
+     */
     public function convertData($statement) {
         $numberRow = $statement->rowCount();
         if ($numberRow > 0) {
@@ -62,6 +74,10 @@ class ProductObject {
         }
     }
 
+    /**
+     * @param $productData
+     * @return false|string
+     */
     public function createProduct($productData) {
         if ($this->checkData($productData)) {
             return $this->validate->error(400);
@@ -105,6 +121,10 @@ class ProductObject {
     }
 
 
+    /**
+     * @param object $productData
+     * @return false|string
+     */
     public function updateProduct(object $productData){
         if (!$this->isProduct($productData->id)) {
             return $this->validate->error(404);
@@ -145,6 +165,7 @@ class ProductObject {
     /**
      * @param $id
      * @return bool
+     *
      */
     public function isProduct($id):bool {
         $database = $this->db;
@@ -155,4 +176,32 @@ class ProductObject {
 
         return $number > 0;
     }
+
+    /**
+     * @param $data
+     * @return false|string
+     */
+    public function deleteProduct($data) {
+        if (!$this->isProduct($data->id)) {
+            return $this->validate->error(404);
+        }
+        $database = $this->db;
+        $query = "DELETE FROM {$this->table_name} WHERE id = ?";
+        $statement = $database->prepare($query);
+
+        $id = htmlspecialchars(strip_tags($data->id));
+
+        $statement->bindParam(1, $id);
+
+        if ($statement->execute()) {
+            http_response_code(200);
+
+            return json_encode(array("message" => "Product was deleted."));
+        } else {
+            http_response_code(503);
+
+            return json_encode(array("message" => "Unable to delete product."));
+        }
+    }
+
 }
