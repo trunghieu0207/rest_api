@@ -12,6 +12,11 @@ Class Validate {
         201 => "Product was created.",
         200 => "Success."
         ];
+
+    /**
+     * @param $code
+     * @return false|string
+     */
     function error ($code) {
         http_response_code($code);
 
@@ -20,6 +25,10 @@ Class Validate {
         ]);
     }
 
+    /**
+     * @param $code
+     * @return false|string
+     */
     public function success($code) {
         http_response_code($code);
         return json_encode([
